@@ -1,10 +1,9 @@
 from utils import *
-from parameters import BOARD
 
 if __name__ == "__main__":
 
-    team1, team2, BOARD = start(BOARD)
-    show_map(BOARD)
+    team1, team2, wmap = start()
+    wmap.show_map()
     turn = True
 
     while team1 and team2:
@@ -28,7 +27,7 @@ if __name__ == "__main__":
                 print('That unit not yours.')
             else:
                 d = input('Chose the direciton: ')
-                new_position = movement(u, d, BOARD)
+                u.move(d, wmap)
 
         elif action == 'attack':
             u = input('Chose your unit for the attack: ')
@@ -44,7 +43,7 @@ if __name__ == "__main__":
             if u == 0 or t == 0:
                 print('Invalid units')
             else:
-                attack_result = attack(u, t, BOARD)
+                attack_result = u.attack(t, wmap)
                 if attack_result != 0:
                     if turn:
                         team2.remove(t)
@@ -54,7 +53,7 @@ if __name__ == "__main__":
             print("You can't do this action, you lose your turn")
 
         turn = not turn
-        show_map(BOARD)
+        wmap.show_map()
     else:
         if team1:
             print('Team 1 wins')

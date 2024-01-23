@@ -2,48 +2,60 @@ import numpy as np
 
 from parameters import UNIT_TYPE_CODE
 
-class map:
+class War_map:
     def __init__(self, dimensions=[5, 5]):
         self.dimensions = dimensions
         self.tiles = np.zeros(dimensions)
 
     def remove_unit(self, unit):
-        self.tiles[unit.position.x, unit.position.y] = 0
+        self.tiles[unit.position["y"], unit.position["x"]] = 0
     
     def set_unit(self, unit):
-        self.tiles[unit.position.x, unit.position.y] = int(str(unit.team) + str(unit.id))
+        self.tiles[unit.position["y"], unit.position["x"]] = int(str(unit.team) + str(unit.id))
 
     def check_ocupation(self, x, y):
-        if self.tiles[x, y] == 0:
+        print(x)
+        print(y)
+        if self.tiles[y, x] == 0:
             return False
         else:
             return True
+        
+    def show_map(self):
+        print(self.tiles)
 
-class unit:
-    def __init__(self, id, team, 
+class Unit:
+    def __init__(self, id, team, type,
                  hit_points = 50,
                  movement = 1,
                  position={'x': 0, 'y':0}, 
                  attack_type={'damage': 10,'distance': 1}):
         self.id = id
         self.team = team
+        self.type = type
         self.hit_points = hit_points
         self.movement = movement
-        self.position = position
-        self.attack_type = attack_type
+        self.position = position.copy()
+        self.attack_type = attack_type.copy()
+
+    def set_x(self, x):
+        self.position['x'] = x
+
+    def set_y(self, y):
+        self.position['y'] = y
 
     def attack(self, target, map):
         # Check if out of range:
-        y_len = abs(self.position.y - target.position.y)
-        x_len = abs(self.position.x - target.position.x)
+        y_len = abs(self.position['y'] - target.position['y'])
+        x_len = abs(self.position['x'] - target.position['x'])
 
-        if y_len > self.attack_type.distance or x_len > self.attack_type.distance:
+        if y_len > self.attack_type["distance"] or x_len > self.attack_type["distance"]:
             print('Target out of range.')
             return 0
         
         # Do damage:
-        target.hit_points -= self.attack_type.damage
-        print('You hit!', 'And do ', self.attack_type.damage, 'damage.')
+        target.hit_points -= self.attack_type["damage"]
+        print('You hit!', 'And do ', self.attack_type["damage"], 'damage.')
         print('The target left with',  target.hit_points, 'hit_points')
 
         # check if unit defeated:
@@ -54,10 +66,11 @@ class unit:
         else:
             return 0
         
-    def movem(self, direction, map):
+    def move(self, direction, map):
 
         # Calculate new positon:
         new_position = self.position.copy()
+
         if direction == 'up':
             new_position['y'] -= self.movement
         elif direction == 'down':
@@ -84,69 +97,60 @@ class unit:
             return 0
 
 
-def create_unit(type, team, id):
-    # unit_features = ['id', 'team', 'type', 'position', 'hit_points', 'movement', 'attack']
-    
-    unit = {}
-    unit['id'] = id
-    unit['type'] = type
-    unit['team'] = team
-    unit['position'] = {'x': 0, 'y':0}
-    unit['hit_points'] = 50
-    if unit['type'] == 'infantry':
-        unit['movement'] = 1
-        unit['attack'] = {
-            'damage': 10,
-            'distance': 1
-        }
-    elif unit['type'] == 'archery':
-        unit['movement'] = 1
-        unit['attack'] = {
-            'damage': 10,
-            'distance': 3
-        }
-    elif unit['type'] == 'cavalry':
-        unit['movement'] = 3
-        unit['attack'] = {
-            'damage': 10,
-            'distance': 1
-        }        
-    else:
-        print('The wrong type of unit have been insert. Unit not generated.')
-        return -1
-    
-    return unit
-
-
 def search_unit(team, unit_id):
     for unit in team:
-        if unit['id'] == int(unit_id):
+        if unit.id == int(unit_id):
             return unit       
     return 0
 
 
-def show_map(map):
-    for line in map:
-        print(line)
+def start():
+    # create map
+    war_map = War_map()
 
-
-def start(map):
     # create units and assing position
+    unit_id = 0
     team_1 = []
-    for unit_type in UNIT_TYPE_CODE:
-        team_1.append(create_unit(unit_type, '1', int('1' + UNIT_TYPE_CODE[unit_type])))
 
-    for place, unit in enumerate(team_1):
-        unit['position']['y'] = place
-        map[unit['position']['y']][unit['position']['x']] = int(unit['team'] + UNIT_TYPE_CODE[unit['type']])
+    team_1 = [Unit(unit_id, 1, unit_type, 
+                   movement=UNIT_TYPE_CODE[unit_type]["movement"], 
+                   attack_type=UNIT_TYPE_CODE[unit_type]["attack_type"]) for unit_id, unit_type in enumerate(UNIT_TYPE_CODE)]
+
+    # for unit_type in UNIT_TYPE_CODE:
+    #     team_1.append(Unit(unit_id, 1, unit_type, 
+    #                        movement=UNIT_TYPE_CODE[unit_type]["movement"], 
+    #                        attack_type=UNIT_TYPE_CODE[unit_type]["attack_type"]))
+    #     unit_id += 1
+
+    [team_1[i].set_y(i) for i in range(len(team_1))]
+    for u in team_1:
+        war_map.set_unit(u) 
+
+    # for place, unit in enumerate(team_1):
+    #     unit.position["y"] = place
+    #     print(unit.position)
+    #     war_map.set_unit(unit)
 
     team_2 = []
-    for unit_type in UNIT_TYPE_CODE:
-        team_2.append(create_unit(unit_type, '2', int('2' + UNIT_TYPE_CODE[unit_type])))
 
-    for place, unit in enumerate(team_2):
-        unit['position']['y'] = place + 2
-        unit['position']['x'] = 4
-        map[unit['position']['y']][unit['position']['x']] = int(unit['team'] + UNIT_TYPE_CODE[unit['type']])
+    team_2 = [Unit(unit_id + 3, 2, unit_type, 
+                    movement=UNIT_TYPE_CODE[unit_type]["movement"], 
+                    attack_type=UNIT_TYPE_CODE[unit_type]["attack_type"]) for unit_id, unit_type in enumerate(UNIT_TYPE_CODE)]
+    
+    [team_2[i].set_y(i) for i in range(len(team_2))]
+    [team_2[i].set_x(war_map.tiles.shape[1] - 1) for i in range(len(team_2))]
+    for u in team_2:
+        war_map.set_unit(u) 
+    
+    # for unit_type in UNIT_TYPE_CODE:
+    #     team_2.append(Unit(unit_id, 2, unit_type, 
+    #                        movement=UNIT_TYPE_CODE[unit_type]["movement"], 
+    #                        attack_type=UNIT_TYPE_CODE[unit_type]["attack_type"]))
+    #     unit_id +=1
 
-    return team_1, team_2, map
+    # for place, unit in enumerate(team_2):
+    #     unit.position["y"] = place
+    #     unit.position["x"] = war_map.tiles.shape[1] - 1
+    #     war_map.set_unit(unit)
+
+    return team_1, team_2, war_map
